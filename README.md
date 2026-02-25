@@ -1,6 +1,106 @@
+<p align="center">
+<b>Alpaca Quant Agent: Multi-Agent Live Trading on Alpaca</b>
+<br><br>
+🚀 Alpaca Quant Agent — An independent enhanced version built on the <a href="https://github.com/Y-Research-SBU/QuantAgent">QuantAgent</a> framework for Alpaca users who want to run AI agents to trade on their accounts, extending it with real-time Alpaca (REST + WebSocket), crypto support, automated trading, and PostgreSQL persistence.
+<br><br>
+<em>Disclaimer:</em> This project is provided solely for educational and research purposes. It is not financial, investment, or trading advice. Trading involves risk, and users should conduct their own due diligence before making any trading decisions.
+<br><br>
+📑 <a href="#quick-start">Quick Start</a> · 📐 <a href="#architecture">Architecture</a> · 📡 <a href="#data-flow">Data Flow</a> · ⚙️ <a href="#execution">Execution</a> · 📚 <a href="#reference">Reference</a>
+</p>
+
+---
+
+<a id="quick-start"></a>
+# QuantAgent Headless Trader
+
+A lightweight, multi-symbol live trading engine. It currently uses a multi-agent LLM strategy (QuantAgent) but is designed to be modular so you can plug in any strategy.
+
+## Quick Start
+
+1. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Setup Trading Keys (Alpaca)**  
+   Create a `.env` file in the root directory:
+   ```bash
+   ALPACA_API_KEY=your_key
+   ALPACA_SECRET_KEY=your_secret
+   TRADING_MODE=paper              # or 'live'
+   ```
+
+3. **Setup Strategy Keys (LLM)**  
+   Open `strategy/default_config.py` and enter your API key directly:
+   ```python
+   DEFAULT_CONFIG = {
+       "agent_llm_provider": "openai",
+       "api_key": "sk-...",  # Put your OpenAI Key here
+       # ...
+   }
+   ```
+
+4. **Configure Symbols**  
+   Edit `config.py` to set trading pairs, allocation percentage, and risk parameters:
+   ```python
+   SYMBOL_CONFIGS = [
+       {
+           "symbol": "BTC/USD",
+           "timeframe": "1m",
+           "capital_pct": 0.10,   # 10% of startup Alpaca balance
+           "stop_loss_pct": 0.02,
+           "take_profit_pct": 0.04,
+       }
+   ]
+   ```
+
+5. **Run**
+   ```bash
+   python main.py
+   ```
+
+## How It Works
+
+The system runs a continuous loop for each symbol:
+
+1. **Waits** for the next candle to close (e.g., exact 5-minute mark).
+2. **Fetches** the latest candle data from Alpaca.
+3. **Analyzes** the data with the strategy (QuantAgent or your own) to get a `LONG`, `SHORT`, or `HOLD` signal.
+4. **Executes** the trade via Alpaca if a signal is generated (market order, then records entry and SL/TP).
+5. **Monitors** the trade in real time using WebSockets: every quote tick is checked against your stop-loss and take-profit; when a level is hit, the position is closed and the trade is written to PostgreSQL.
+
+So: time-aligned candles → strategy decision → Alpaca execution → live quote stream for exits.
+
+## Swapping the Strategy
+
+The trading engine (`core/`) is separate from the strategy (`strategy/`). To use a different bot or algorithm instead of QuantAgent:
+
+1. Open `core/engine.py`.
+2. Locate the `SymbolTrader` class.
+3. Replace the `TradingGraph` initialization and the `run_agent_analysis` call with your own bot’s logic.
+
+**Example:**
+
+```python
+# In core/engine.py
+
+# 1. Initialize your bot
+self.my_bot = MyCustomStrategy()
+
+# 2. In the loop(), get the signal
+# final_state = await asyncio.to_thread(self.run_agent_analysis, df)  <-- REMOVE
+decision = self.my_bot.get_signal(df)  # <-- ADD: your bot returns LONG/SHORT (+ optional risk ratio)
+```
+
+Your bot only needs to accept a DataFrame of candles and return a decision (`LONG` / `SHORT`) and optionally a risk-reward ratio.
+
+---
+
+<a id="guide"></a>
 # System Architecture & Data Flow Guide
 
-## 1. Architecture Overview
+<a id="architecture"></a>
+## 1. Architecture Overview 📐
 
 The system is a multi-symbol, asynchronous trading engine built on Python's `asyncio`. It operates as a single process managing concurrent event loops for independent trading pairs.
 
@@ -32,7 +132,8 @@ The system is a multi-symbol, asynchronous trading engine built on Python's `asy
 
 ---
 
-## 2. Data Flow Pipelines
+<a id="data-flow"></a>
+## 2. Data Flow Pipelines 📡
 
 The system manages two distinct data pipelines: **Real-Time (Ticks)** and **Historical (Candles)**.
 
@@ -147,40 +248,8 @@ The system manages two distinct data pipelines: **Real-Time (Ticks)** and **Hist
 
 ---
 
-## 3. Module Reference
-
-| Module | Responsibility |
-| :--- | :--- |
-| **`run_live_trading.py`** | **Entry Point**. Initializes `MultiSymbolTrader`, sets up the DB connection, and spawns independent asyncio tasks for each symbol's loop. |
-| **`config.py`** | **Configuration**. Static definitions for Symbols, API Keys, Database credentials, and Risk parameters. Loads from `env.env`. |
-| **`api/alpaca_socket.py`** | **WebSocket Client**. Handles connection lifecycle, authentication, and subscription management. Reconnects automatically on disconnect. |
-| **`candle_poller.py`** | **Synchronization**. Ensures data fetching occurs strictly at candle close times to prevent "repainting" or incomplete data analysis. |
-| **`data_fetcher.py`** | **REST Client**. Async wrapper for Alpaca's Bar Data API. Handles pagination and DataFrame formatting. |
-| **`trade_manager.py`** | **State Machine**. Manages the lifecycle of a trade (Open -> Monitor -> Close). Orchestrates DB updates and Order execution. |
-| **`order_executor.py`** | **Broker Interface**. Submits Market Orders and closes positions via Alpaca Orders API v2. Handles order polling to confirm fills. |
-| **`api/trading_monitor.py`** | **Risk Engine**. The consumer of the WebSocket queue. Performs high-frequency checks of current price vs. trade limits. |
-| **`db_handler.py`** | **Database**. Manages `asyncpg` connection pool. Provides CRUD operations for the `trades` table. Ensures schema exists on startup. |
-
----
-
-## 4. Database Schema (`trades` table)
-
-| Column | Type | Description |
-| :--- | :--- | :--- |
-| `uid` | TEXT (PK) | Unique UUID for the trade. |
-| `ticker` | TEXT | Symbol (e.g., BTC/USD). |
-| `direction` | TEXT | LONG or SHORT. |
-| `entry_price` | FLOAT | Filled average price from broker. |
-| `entry_time` | TIMESTAMPTZ | UTC timestamp of entry fill. |
-| `status` | TEXT | OPEN or CLOSED. |
-| `sl_price` | FLOAT | Calculated Stop Loss level. |
-| `tp_price` | FLOAT | Calculated Take Profit level. |
-| `exit_price` | FLOAT | Filled average price at exit. |
-| `pnl` | FLOAT | Realized Profit/Loss. |
-
----
-
-## 5. Execution Logic Details
+<a id="execution"></a>
+## 3. Execution Logic Details ⚙️
 
 ### Entry Logic
 
@@ -250,3 +319,23 @@ The system manages two distinct data pipelines: **Real-Time (Ticks)** and **Hist
 4.  **Close**: `TradeManager` calls `close_position()`.
 5.  **Update**: `UPDATE` DB with `exit_price` and `pnl`.
 6.  **Cleanup**: Removed from memory and monitor list.
+
+---
+
+<a id="reference"></a>
+### 📚 Reference
+
+This project is inspired by and builds upon:
+
+- **QuantAgent** — [Y-Research-SBU/QuantAgent](https://github.com/Y-Research-SBU/QuantAgent) · Multi-agent LLM framework for high-frequency trading (indicators, pattern, trend, decision agents).
+
+If you use QuantAgent in your work, you may cite the original paper:
+
+```text
+@article{xiong2025quantagent,
+  title   = {QuantAgent: Price-Driven Multi-Agent LLMs for High-Frequency Trading},
+  author  = {Fei Xiong and Xiang Zhang and Aosong Feng and Siqi Sun and Chenyu You},
+  journal = {arXiv preprint arXiv:2509.09995},
+  year    = {2025}
+}
+```
