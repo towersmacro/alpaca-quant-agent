@@ -19,7 +19,7 @@ SYMBOL_CONFIGS = [
         "symbol": "BTC/USD",       # Symbol for data fetch + websocket subscription
         "exec_symbol": "BTC/USD",  # Symbol for actual order placement (Alpaca)
         "timeframe": "1m",         # Candle timeframe: 1m, 5m, 15m, 1h, 4h, 1d
-        "capital": 100.0,          # Capital allocated per trade (USD notional)
+        "capital_pct": 0.10,       # 10% of startup Alpaca balance (fixed for entire run)
         "stop_loss_pct": 0.02,     # 2% Stop Loss distance
         "take_profit_pct": 0.04,   # 4% Take Profit distance
     },
@@ -27,7 +27,7 @@ SYMBOL_CONFIGS = [
         "symbol": "ETH/USD",       # Symbol for data fetch + websocket subscription
         "exec_symbol": "ETH/USD",  # Symbol for actual order placement (Alpaca)
         "timeframe": "1m",         # Candle timeframe: 1m, 5m, 15m, 1h, 4h, 1d
-        "capital": 100.0,          # Capital allocated per trade (USD notional)
+        "capital_pct": 0.10,       # 10% of startup Alpaca balance (fixed for entire run)
         "stop_loss_pct": 0.02,     # 2% Stop Loss distance
         "take_profit_pct": 0.04,   # 4% Take Profit distance
     },
@@ -38,6 +38,7 @@ SYMBOL = "BTC/USD"
 EXEC_SYMBOL = "BTC/USD"
 TIMEFRAME = "5m"
 CAPITAL = 100.0
+CAPITAL_PCT = float(os.getenv("CAPITAL_PCT", "0.10"))  # Legacy single-symbol percentage sizing
 
 # --- Default Risk Parameters ---
 STOP_LOSS_PCT = 0.02     # Default 2% Stop Loss

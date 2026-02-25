@@ -24,6 +24,7 @@ from core.api.trading_monitor import TradingMonitor
 from core.data_fetcher import fetch_historical_crypto_async
 from core.db_handler import close_pool, ensure_trades_table
 from core.trade_manager import TradeManager
+from core.order_executor import get_account_info
 from core.mock_signal import generate_mock_signal
 from core.candle_poller import AsyncCandlePoller
 
@@ -41,6 +42,7 @@ class SymbolTrader:
         self.exec_symbol = cfg.get("exec_symbol", self.symbol)
         self.timeframe = cfg.get("timeframe", config.TIMEFRAME)
         self.capital = float(cfg.get("capital", config.CAPITAL))
+        self.capital_pct = float(cfg.get("capital_pct", 0.0))
         self.stop_loss_pct = float(cfg.get("stop_loss_pct", config.STOP_LOSS_PCT))
         self.take_profit_pct = float(cfg.get("take_profit_pct", config.TAKE_PROFIT_PCT))
 
@@ -194,12 +196,75 @@ class MultiSymbolTrader:
             return
         await runtime.quote_queue.put(quote_update)
 
+    @staticmethod
+    def _normalize_pct(value: float) -> float:
+        """Accept 0.10 (10%) or 10 (10%)."""
+        pct = float(value)
+        if pct > 1.0:
+            pct = pct / 100.0
+        return max(0.0, pct)
+
+    async def _initialize_symbol_capitals(self):
+        """
+        Compute per-symbol notional once at startup from Alpaca account balance.
+        These computed notionals remain fixed for the process lifetime.
+        """
+        account = await get_account_info()
+        if not account:
+            raise RuntimeError(
+                "Could not fetch Alpaca account info at startup. "
+                "Cannot initialize percentage-based capital allocation."
+            )
+
+        cash_value = account.get("cash")
+        try:
+            base_balance = float(cash_value)
+        except (TypeError, ValueError):
+            raise RuntimeError(
+                f"Invalid Alpaca cash value at startup: {cash_value!r}. "
+                "Cannot initialize percentage-based capital allocation."
+            )
+
+        if base_balance <= 0:
+            raise RuntimeError(
+                f"Non-positive Alpaca cash balance at startup: {base_balance}. "
+                "Cannot initialize percentage-based capital allocation."
+            )
+
+        total_pct = 0.0
+        for runtime in self.trader_runtimes:
+            if runtime.capital_pct > 0:
+                total_pct += self._normalize_pct(runtime.capital_pct)
+
+        if total_pct > 1.0:
+            logger.warning(
+                "Total capital_pct across symbols is %.2f%% (>100%%). Notionals may exceed account balance.",
+                total_pct * 100,
+            )
+
+        logger.info("Initializing position notionals from Alpaca balance: %.2f USD", base_balance)
+
+        for runtime in self.trader_runtimes:
+            pct = self._normalize_pct(runtime.capital_pct)
+            if pct > 0:
+                runtime.capital = round(base_balance * pct, 2)
+                logger.info(
+                    "[%s] capital_pct=%.2f%% -> fixed startup notional=%.2f USD",
+                    runtime.symbol, pct * 100, runtime.capital
+                )
+            else:
+                logger.info(
+                    "[%s] capital_pct not set. Using fixed configured notional=%.2f USD",
+                    runtime.symbol, runtime.capital
+                )
+
     async def run(self):
         if not self.trader_runtimes:
             logger.error("No symbol configs provided. Exiting.")
             return
 
         await ensure_trades_table()
+        await self._initialize_symbol_capitals()
 
         socket_task = asyncio.create_task(self.socket.start_async())
         trader_tasks = [asyncio.create_task(runtime.loop()) for runtime in self.trader_runtimes]
@@ -231,6 +296,7 @@ def build_symbol_configs() -> List[Dict[str, Any]]:
             "exec_symbol": config.EXEC_SYMBOL,
             "timeframe": config.TIMEFRAME,
             "capital": config.CAPITAL,
+            "capital_pct": getattr(config, "CAPITAL_PCT", 0.0),
             "stop_loss_pct": config.STOP_LOSS_PCT,
             "take_profit_pct": config.TAKE_PROFIT_PCT,
         }
