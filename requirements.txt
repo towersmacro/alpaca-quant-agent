@@ -1,5 +1,3 @@
-flask
-yfinance
 pandas
 numpy
 matplotlib
@@ -14,10 +12,10 @@ langchain-core
 langgraph
 openai
 anthropic
-ipython
 Pillow
 requests
 websockets
 python-dotenv
 httpx
 asyncpg
+aiohttp
