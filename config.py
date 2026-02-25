@@ -1,14 +1,14 @@
 """
-Configuration file for QuantAgent Live Trading.
-Centralizes all settings for multi-symbol trading, API keys, and database connections.
+Configuration for QuantAgent Live Trading.
+Centralizes all settings: multi-symbol trading, API keys, database, and system flags.
 """
 
 import os
 from pathlib import Path
 import dotenv
 
-# Load environment variables
-env_path = Path(__file__).parent / "trading/env.env"
+# Load environment variables from .env at project root
+env_path = Path(__file__).parent / ".env"
 dotenv.load_dotenv(env_path)
 
 # --- Trading Strategy Settings ---
@@ -18,7 +18,15 @@ SYMBOL_CONFIGS = [
     {
         "symbol": "BTC/USD",       # Symbol for data fetch + websocket subscription
         "exec_symbol": "BTC/USD",  # Symbol for actual order placement (Alpaca)
-        "timeframe": "5m",         # Candle timeframe: 1m, 5m, 15m, 1h, 4h, 1d
+        "timeframe": "1m",         # Candle timeframe: 1m, 5m, 15m, 1h, 4h, 1d
+        "capital": 100.0,          # Capital allocated per trade (USD notional)
+        "stop_loss_pct": 0.02,     # 2% Stop Loss distance
+        "take_profit_pct": 0.04,   # 4% Take Profit distance
+    },
+        {
+        "symbol": "ETH/USD",       # Symbol for data fetch + websocket subscription
+        "exec_symbol": "ETH/USD",  # Symbol for actual order placement (Alpaca)
+        "timeframe": "1m",         # Candle timeframe: 1m, 5m, 15m, 1h, 4h, 1d
         "capital": 100.0,          # Capital allocated per trade (USD notional)
         "stop_loss_pct": 0.02,     # 2% Stop Loss distance
         "take_profit_pct": 0.04,   # 4% Take Profit distance
@@ -38,7 +46,7 @@ TAKE_PROFIT_PCT = 0.04   # Default 4% Take Profit
 # --- API Keys (Loaded from env.env) ---
 ALPACA_API_KEY = os.getenv("ALPACA_API_KEY")
 ALPACA_SECRET_KEY = os.getenv("ALPACA_SECRET_KEY")
-OPENAI_API_KEY=os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 TRADING_MODE = os.getenv("TRADING_MODE", "paper") # 'paper' or 'live'
 
 # --- Database Settings (PostgreSQL) ---
@@ -47,7 +55,7 @@ POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
 POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "54322"))
 POSTGRES_DB = os.getenv("POSTGRES_DB", "postgres")
 POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgrs")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgres")
 
 # --- System Settings ---
 LOG_LEVEL = "INFO"
