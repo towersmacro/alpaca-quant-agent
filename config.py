@@ -23,15 +23,7 @@ SYMBOL_CONFIGS = [
         "capital_pct": 0.10,       # 10% of startup Alpaca balance (fixed for entire run)
         "stop_loss_pct": 0.02,     # 2% Stop Loss distance
         "take_profit_pct": 0.04,   # 4% Take Profit distance
-    },
-        {
-        "symbol": "ETH/USD",       # Symbol for data fetch + websocket subscription
-        "exec_symbol": "ETH/USD",  # Symbol for actual order placement (Alpaca)
-        "timeframe": "1m",         # Candle timeframe: 1m, 5m, 15m, 1h, 4h, 1d
-        "capital_pct": 0.10,       # 10% of startup Alpaca balance (fixed for entire run)
-        "stop_loss_pct": 0.02,     # 2% Stop Loss distance
-        "take_profit_pct": 0.04,   # 4% Take Profit distance
-    },
+    }
 ]
 
 # Backward-compatible single-symbol defaults (used as fallback if SYMBOL_CONFIGS is empty)
