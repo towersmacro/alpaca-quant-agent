@@ -137,6 +137,45 @@ class TradeManager:
         del self.open_trades[uid]
         return True
 
+    async def close_position_by_signal(
+        self,
+        exit_signal: str,
+        fallback_exit_price: float = None,
+    ) -> bool:
+        """
+        Close open trades for this symbol that match the provided direction.
+
+        Used for signal reversal handling, e.g. close SHORT trades when a LONG
+        signal appears (and vice versa).
+        """
+        direction = str(exit_signal or "").strip().lower()
+        if direction not in ("long", "short"):
+            logger.warning("Invalid exit signal '%s' for %s", exit_signal, self.symbol)
+            return False
+
+        target_uids = [
+            uid for uid, trade in self.open_trades.items()
+            if trade.ticker == self.symbol and trade.direction == direction
+        ]
+        if not target_uids:
+            return False
+
+        closed_any = False
+        for uid in target_uids:
+            try:
+                if await self.close_trade(
+                    uid=uid,
+                    reason=f"Reverse signal ({direction.upper()})",
+                    fallback_exit_price=fallback_exit_price,
+                ):
+                    closed_any = True
+            except Exception as exc:
+                logger.error(
+                    "[%s] Error closing %s trade %s on reverse signal: %s",
+                    self.symbol, direction, uid, exc
+                )
+        return closed_any
+
     async def close_all(self, reason="Manual Close"):
         for uid in list(self.open_trades.keys()):
             await self.close_trade(uid, reason)
