@@ -36,9 +36,14 @@ def main():
     symbol_configs = build_symbol_configs()
     logger.info("Starting QuantAgent with %d symbol(s)", len(symbol_configs))
     for cfg in symbol_configs:
-        logger.info("  %s (%s) — $%.0f capital, SL=%.1f%%, TP=%.1f%%",
-                     cfg["symbol"], cfg["timeframe"],
-                     cfg["capital"], cfg["stop_loss_pct"]*100, cfg["take_profit_pct"]*100)
+        pct = cfg.get("capital_pct", 0) or 0
+        if pct > 0:
+            cap_info = "%.0f%% of balance" % (pct * 100)
+        else:
+            cap_info = "$%.0f" % cfg.get("capital", 0)
+        logger.info("  %s (%s) — %s, SL=%.1f%%, TP=%.1f%%",
+                    cfg["symbol"], cfg["timeframe"],
+                    cap_info, cfg["stop_loss_pct"]*100, cfg["take_profit_pct"]*100)
     
     orchestrator = MultiSymbolTrader(symbol_configs)
     try:

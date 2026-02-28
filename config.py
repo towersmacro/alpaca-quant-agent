@@ -7,9 +7,10 @@ import os
 from pathlib import Path
 import dotenv
 
-# Load environment variables from .env at project root
-env_path = Path(__file__).parent / ".env"
-dotenv.load_dotenv(env_path)
+# Load environment variables from .env (or env.env) at project root
+root = Path(__file__).parent
+dotenv.load_dotenv(root / ".env")
+dotenv.load_dotenv(root / "env.env")  # fallback if you use env.env
 
 # --- Trading Strategy Settings ---
 # Multi-symbol configuration. Each entry is a fully independent flow:
@@ -62,7 +63,7 @@ POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgres")
 LOG_LEVEL = "INFO"
 
 # --- Analysis Settings ---
-USE_MOCK_SIGNALS = False  # Set to True to bypass QuantAgent and use random signals for testing
+USE_MOCK_SIGNALS = True  # Set to True to bypass QuantAgent and use random signals for testing
 
 # --- Alpaca API Constants ---
 # Endpoints for data and streaming

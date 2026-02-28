@@ -54,9 +54,16 @@ def _get_alpaca_base_url() -> str:
 
 
 def _get_alpaca_headers() -> Dict[str, str]:
+    key = config.ALPACA_API_KEY
+    secret = config.ALPACA_SECRET_KEY
+    if key is None or secret is None:
+        raise ValueError(
+            "ALPACA_API_KEY and ALPACA_SECRET_KEY must be set. "
+            "Add them to a .env or env.env file in the project root."
+        )
     return {
-        "APCA-API-KEY-ID": config.ALPACA_API_KEY,
-        "APCA-API-SECRET-KEY": config.ALPACA_SECRET_KEY,
+        "APCA-API-KEY-ID": key,
+        "APCA-API-SECRET-KEY": secret,
     }
 
 

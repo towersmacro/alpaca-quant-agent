@@ -1,0 +1,60 @@
+2026-02-28 21:25:01,741 - main - INFO - Starting QuantAgent with 2 symbol(s)
+2026-02-28 21:26:06,825 - main - INFO - Starting QuantAgent with 2 symbol(s)
+2026-02-28 21:26:06,826 - main - INFO -   BTC/USD (1m) — 10% of balance, SL=2.0%, TP=4.0%
+2026-02-28 21:26:06,826 - main - INFO -   ETH/USD (1m) — 10% of balance, SL=2.0%, TP=4.0%
+2026-02-28 21:28:36,814 - main - INFO - Starting QuantAgent with 2 symbol(s)
+2026-02-28 21:28:36,814 - main - INFO -   BTC/USD (1m) — 10% of balance, SL=2.0%, TP=4.0%
+2026-02-28 21:28:36,814 - main - INFO -   ETH/USD (1m) — 10% of balance, SL=2.0%, TP=4.0%
+2026-02-28 21:28:36,837 - quant_agent_trading - INFO - Connected to PostgreSQL at localhost:54322/postgres
+2026-02-28 21:28:36,843 - quant_agent_trading - ERROR - Error getting account info: Header value must be str or bytes, not <class 'NoneType'>
+2026-02-28 21:29:29,676 - main - INFO - Starting QuantAgent with 2 symbol(s)
+2026-02-28 21:29:29,676 - main - INFO -   BTC/USD (1m) — 10% of balance, SL=2.0%, TP=4.0%
+2026-02-28 21:29:29,676 - main - INFO -   ETH/USD (1m) — 10% of balance, SL=2.0%, TP=4.0%
+2026-02-28 21:29:29,697 - quant_agent_trading - INFO - Connected to PostgreSQL at localhost:54322/postgres
+2026-02-28 21:29:31,389 - live_trader - INFO - Initializing position notionals from Alpaca balance: 99611.27 USD
+2026-02-28 21:29:31,390 - live_trader - INFO - [BTC/USD] capital_pct=10.00% -> fixed startup notional=9961.13 USD
+2026-02-28 21:29:31,390 - live_trader - INFO - [ETH/USD] capital_pct=10.00% -> fixed startup notional=9961.13 USD
+2026-02-28 21:29:32,362 - live_trader - INFO - [BTC/USD] Starting flow (1m)
+2026-02-28 21:29:32,362 - live_trader - INFO - [ETH/USD] Starting flow (1m)
+2026-02-28 21:29:33,712 - quant_agent_trading - INFO - Connecting to wss://stream.data.alpaca.markets/v1beta3/crypto/us...
+2026-02-28 21:29:33,713 - quant_agent_trading - INFO - Sent Alpaca auth request
+2026-02-28 21:29:33,713 - quant_agent_trading - INFO - Connected to Alpaca Stream
+2026-02-28 21:29:34,067 - quant_agent_trading - INFO - Authenticated successfully
+2026-02-28 21:29:34,067 - quant_agent_trading - INFO - Sent subscription for ['BTC/USD', 'ETH/USD']
+2026-02-28 21:29:34,413 - quant_agent_trading - INFO - Subscription confirmed
+2026-02-28 21:30:01,757 - live_trader - INFO - [ETH/USD] Last Bar: 2026-02-28 15:58:00+00:00 | Close: 1899.0455
+2026-02-28 21:30:01,757 - live_trader - INFO - [ETH/USD] Decision=LONG RR=1:3 (Parsed: 3.00)
+2026-02-28 21:30:01,757 - quant_agent_trading - INFO - Attempting to open LONG trade for ETH/USD
+2026-02-28 21:30:01,771 - live_trader - INFO - [BTC/USD] Last Bar: 2026-02-28 15:59:00+00:00 | Close: 64847.98
+2026-02-28 21:30:01,773 - live_trader - INFO - [BTC/USD] Decision=SHORT RR=1:4 (Parsed: 4.00)
+2026-02-28 21:30:01,773 - quant_agent_trading - INFO - Attempting to open SHORT trade for BTC/USD
+2026-02-28 21:30:02,835 - quant_agent_trading - INFO - Submitting SELL order: (0.153594 BTC/USD @ ~$64853.7450)
+2026-02-28 21:30:02,876 - quant_agent_trading - INFO - Submitting BUY order: (5.245461 ETH/USD @ ~$1899.0000)
+2026-02-28 21:30:03,901 - quant_agent_trading - ERROR - Non-retryable error 403: Client error '403 Forbidden' for url 'https://paper-api.alpaca.markets/v2/orders'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
+2026-02-28 21:30:03,901 - quant_agent_trading - ERROR - [BTC/USD] Unexpected error submitting order: Client error '403 Forbidden' for url 'https://paper-api.alpaca.markets/v2/orders'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
+Traceback (most recent call last):
+  File "/Users/garvitsachdeva/alpaca-quant-agent/core/order_executor.py", line 248, in submit_market_order
+    response = await retry_http_request(client, "post", "/v2/orders", RetryStrategy.ORDER_SUBMIT, json=order_payload)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/garvitsachdeva/alpaca-quant-agent/core/retry_handler.py", line 132, in retry_http_request
+    return await retry_async(_make_request, strategy)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/garvitsachdeva/alpaca-quant-agent/core/retry_handler.py", line 80, in retry_async
+    result = await func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/garvitsachdeva/alpaca-quant-agent/core/retry_handler.py", line 129, in _make_request
+    response.raise_for_status()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/garvitsachdeva/alpaca-quant-agent/venv/lib/python3.14/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '403 Forbidden' for url 'https://paper-api.alpaca.markets/v2/orders'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
+2026-02-28 21:30:03,904 - quant_agent_trading - ERROR - Failed to open trade for BTC/USD
+2026-02-28 21:30:04,283 - quant_agent_trading - INFO - Order executed successfully: e20fed5e-6bbb-45db-aa9a-dbe6fce12d31
+2026-02-28 21:30:04,283 - quant_agent_trading - INFO - Status: filled
+2026-02-28 21:30:04,283 - quant_agent_trading - INFO - [TRADE] New LONG | Entry: 1900.125243831 | SL: 1862.12 | TP: 2014.13
+2026-02-28 21:30:04,292 - quant_agent_trading - INFO - Trade aa19cf3a-a292-4e22-bbd2-7bf1268126df inserted into DB
+2026-02-28 21:30:04,293 - quant_agent_trading - INFO - Trade opened: aa19cf3a-a292-4e22-bbd2-7bf1268126df | 5.245461 ETH/USD @ 1900.125243831
+2026-02-28 21:30:12,498 - main - INFO - Shutting down...

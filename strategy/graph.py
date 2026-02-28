@@ -45,13 +45,11 @@ class TradingGraph:
 
     def _get_api_key(self, provider: str = "openai") -> str:
         if provider == "openai":
-            api_key = self.config.get("api_key") or os.environ.get("OPENAI_API_KEY")
-            if not api_key:
+            api_key = os.environ.get("OPENAI_API_KEY") or self.config.get("api_key")
+            if not api_key or api_key.strip() in ("", "sk-", "your-openai-api-key-here"):
                 raise ValueError(
-                    "OpenAI API key not found. Set OPENAI_API_KEY env var or config['api_key']."
+                    "OpenAI API key not found. Set OPENAI_API_KEY in your .env file or environment."
                 )
-            if api_key in ("your-openai-api-key-here", ""):
-                raise ValueError("Please replace the placeholder API key with your actual OpenAI API key.")
         elif provider == "anthropic":
             api_key = self.config.get("anthropic_api_key") or os.environ.get("ANTHROPIC_API_KEY")
             if not api_key:
