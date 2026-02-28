@@ -53,11 +53,25 @@ class TradeManager:
                          historical_data: pd.DataFrame = None):
         logger.info(f"Attempting to open {direction} trade for {self.symbol}")
         
-        side = "buy" if direction.lower() == "long" else "sell"
+        direction_lower = direction.lower()
+        side = "buy" if direction_lower == "long" else "sell"
         order_result = await submit_market_order(self.symbol, side, notional_value=notional, qty=quantity)
         
-        if not order_result or order_result['status'] not in ('filled', 'partially_filled'):
-            logger.error(f"Failed to open trade for {self.symbol}")
+        if not order_result:
+            if direction_lower == "short":
+                return None
+            else:
+                logger.error("Failed to open trade for %s", self.symbol)
+            return None
+
+        if order_result.get('status') not in ('filled', 'partially_filled'):
+            if direction_lower == "short":
+                logger.info(
+                    "Skipping SHORT open for %s (status=%s)",
+                    self.symbol, order_result.get('status')
+                )
+            else:
+                logger.error("Failed to open trade for %s (status=%s)", self.symbol, order_result.get('status'))
             return None
 
         uid = str(uuid.uuid4())
