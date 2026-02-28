@@ -42,7 +42,7 @@ A lightweight, multi-symbol live trading engine. It uses the QuantAgent multi-ag
    **No OpenAI key yet?** See [Getting an OpenAI API key](#getting-an-openai-api-key) below.
 
 4. **PostgreSQL (trade storage)**  
-   The bot saves trades to PostgreSQL. Keep PostgreSQL running (e.g. locally or in Docker), then add the DB details to your `.env` (or leave them unset to use the defaults in `config.py`):
+   Install PostgreSQL here: [postgresql.org/download](https://www.postgresql.org/download/). Keep it running (local or Docker), then add DB details to your `.env` (or leave unset to use defaults in `config.py`):
    ```bash
    POSTGRES_HOST=localhost
    POSTGRES_PORT=54322
@@ -50,6 +50,11 @@ A lightweight, multi-symbol live trading engine. It uses the QuantAgent multi-ag
    POSTGRES_USER=postgres
    POSTGRES_PASSWORD=postgres
    ```
+   `POSTGRES_HOST` = database server address (host)  
+   `POSTGRES_PORT` = database port number  
+   `POSTGRES_DB` = database name  
+   `POSTGRES_USER` = database username  
+   `POSTGRES_PASSWORD` = database password  
    If these are not set, `config.py` uses the values above. Change them to match your own database.
 
 5. **Configure symbols**  
