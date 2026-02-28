@@ -222,7 +222,10 @@ async def submit_market_order(
 ) -> Optional[Dict[str, Any]]:
     alpaca_symbol = symbol.replace("/", "")
     current_price = await get_current_price(symbol)
-    
+
+    if side.lower() == "sell":
+        logger.info(f"Shorting {symbol} is not supported on Alpaca")
+        return None
     try:
         if notional_value is not None:  
             if not current_price or current_price <= 0:

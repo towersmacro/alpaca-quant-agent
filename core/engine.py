@@ -149,6 +149,11 @@ class SymbolTrader:
                     logger.info("[%s] Decision=%s RR=%s (Parsed: %.2f)", self.symbol, decision, rr_ratio, rr_val)
 
                     if decision in ["LONG", "SHORT"]:
+                        reverse_direction = "short" if decision == "LONG" else "long"
+                        await self.manager.close_position_by_signal(
+                            exit_signal=reverse_direction,
+                            fallback_exit_price=float(last_bar["Close"]),
+                        )
                         dynamic_tp_pct = self.stop_loss_pct * rr_val
                         
                         await self.manager.open_trade(
