@@ -1,11 +1,11 @@
 <p align="center">
 <b>Alpaca Quant Agent: Multi-Agent Live Trading on Alpaca</b>
 <br><br>
-🚀 Alpaca Quant Agent — An independent enhanced version built on the <a href="https://github.com/Y-Research-SBU/QuantAgent">QuantAgent</a> framework for Alpaca users who want to run AI agents to trade on their accounts, extending it with real-time Alpaca (REST + WebSocket), crypto support, automated trading, and PostgreSQL persistence.
+🚀 Alpaca Quant Agent — An enhanced version built on the <a href="https://github.com/Y-Research-SBU/QuantAgent">QuantAgent</a> framework for Alpaca users who want to use AI to trade. It adds real-time Alpaca (REST + WebSocket), crypto support, automated trading, and saves trades to PostgreSQL.
 <br><br>
-<em>Disclaimer:</em> This project is provided solely for educational and research purposes. It is not financial, investment, or trading advice. Trading involves risk, and users should conduct their own due diligence before making any trading decisions.
+<em>Disclaimer:</em> This is for educational and research only. It is not financial or trading advice. Trading has risk; do your own research before you trade.
 <br><br>
-📑 <a href="#quick-start">Quick Start</a> · 📐 <a href="#architecture">Architecture</a> · 📡 <a href="#data-flow">Data Flow</a> · ⚙️ <a href="#execution">Execution</a> · 📚 <a href="#reference">Reference</a>
+📑 <a href="#quick-start">Quick Start</a> · 📐 <a href="#architecture">Architecture</a> · 📡 <a href="#data-flow">Data Flow</a> · ⚙️ <a href="#execution">Execution</a> · 🤝 <a href="#contributing">Contributing</a> · 📚 <a href="#reference">Reference</a>
 </p>
 
 ---
@@ -13,51 +13,74 @@
 <a id="quick-start"></a>
 # QuantAgent Headless Trader
 
-A lightweight, multi-symbol live trading engine. It currently uses a multi-agent LLM strategy (QuantAgent) but is designed to be modular so you can plug in any strategy.
+A lightweight, multi-symbol live trading engine. It uses the QuantAgent multi-agent LLM strategy by default but you can plug in your own strategy.
 
 ## Quick Start
 
-1. **Install Dependencies**
+1. **Create and activate a virtual environment**
+   ```bash
+   python -m venv venv
+   ```
+   Then activate it:
+   - **macOS/Linux:** `source venv/bin/activate`
+   - **Windows:** `venv\Scripts\activate`
+
+2. **Install dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Setup Trading Keys (Alpaca)**  
-   Create a `.env` file in the root directory:
+3. **Set up environment variables**  
+   Create a `.env` file in the project root with your Alpaca and OpenAI keys:
    ```bash
-   ALPACA_API_KEY=your_key
-   ALPACA_SECRET_KEY=your_secret
+   ALPACA_API_KEY=your_alpaca_key
+   ALPACA_SECRET_KEY=your_alpaca_secret
    TRADING_MODE=paper              # or 'live'
+   OPENAI_API_KEY=sk-your-openai-key-here
    ```
+   The bot uses `OPENAI_API_KEY` from .env, so you don’t need to edit any config.  
+   **No OpenAI key yet?** See [Getting an OpenAI API key](#getting-an-openai-api-key) below.
 
-3. **Setup Strategy Keys (LLM)**  
-   Open `strategy/default_config.py` and enter your API key directly:
-   ```python
-   DEFAULT_CONFIG = {
-       "agent_llm_provider": "openai",
-       "api_key": "sk-...",  # Put your OpenAI Key here
-       # ...
-   }
+4. **PostgreSQL (trade storage)**  
+   The bot saves trades to PostgreSQL. Keep PostgreSQL running (e.g. locally or in Docker), then add the DB details to your `.env` (or leave them unset to use the defaults in `config.py`):
+   ```bash
+   POSTGRES_HOST=localhost
+   POSTGRES_PORT=54322
+   POSTGRES_DB=postgres
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=postgres
    ```
+   If these are not set, `config.py` uses the values above. Change them to match your own database.
 
-4. **Configure Symbols**  
-   Edit `config.py` to set trading pairs, allocation percentage, and risk parameters:
+5. **Configure symbols**  
+   Edit `config.py` to set trading pairs, allocation percentage, and risk:
    ```python
    SYMBOL_CONFIGS = [
        {
            "symbol": "BTC/USD",
            "timeframe": "1m",
-           "capital_pct": 0.10,   # 10% of startup Alpaca balance
+           "capital_pct": 0.10,   # 10% of startup Alpaca cash
            "stop_loss_pct": 0.02,
            "take_profit_pct": 0.04,
        }
    ]
    ```
 
-5. **Run**
+6. **Run**
    ```bash
    python main.py
    ```
+
+<a id="getting-an-openai-api-key"></a>
+### Getting an OpenAI API key
+
+The bot uses OpenAI for the analysis. To get a key:
+
+1. Sign up or log in at [platform.openai.com](https://platform.openai.com).
+2. Go to **API keys** (in your profile or [here](https://platform.openai.com/api-keys)).
+3. Click **Create new secret key**, give it a name (e.g. “Alpaca Quant Agent”), and copy the key.
+4. Put it in your `.env` as `OPENAI_API_KEY=sk-...`.  
+   Keep the key private and don’t put it in git.
 
 ## How It Works
 
@@ -322,14 +345,21 @@ The system manages two distinct data pipelines: **Real-Time (Ticks)** and **Hist
 
 ---
 
+<a id="contributing"></a>
+### Contributing
+
+We welcome contributions. This repo is a standalone fork of [QuantAgent](https://github.com/Y-Research-SBU/QuantAgent) that adds Alpaca execution, cash-based sizing, and runs headless (no UI). If you add a feature, fix a bug, or improve the docs, open an issue or pull request. We’re happy to improve Alpaca support and multi-symbol trading with the community.
+
+---
+
 <a id="reference"></a>
 ### 📚 Reference
 
-This project is inspired by and builds upon:
+This project is built on:
 
 - **QuantAgent** — [Y-Research-SBU/QuantAgent](https://github.com/Y-Research-SBU/QuantAgent) · Multi-agent LLM framework for high-frequency trading (indicators, pattern, trend, decision agents).
 
-If you use QuantAgent in your work, you may cite the original paper:
+If you use QuantAgent in your work, you can cite the original paper:
 
 ```text
 @article{xiong2025quantagent,
